@@ -17,8 +17,8 @@ if st.button("Run Forensic Audit"):
     else:
         with st.spinner("Fetching live on-chain market data arrays..."):
             # Fetch data from DexScreener API
+            #api_url = f"https://dexscreener.com{target_ca}"
             api_url = f"https://dexscreener.com{target_ca}"
-            
             # Browser headers to bypass bot protection
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
