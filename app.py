@@ -1,4 +1,4 @@
-pythonimport streamlit as st
+import streamlit as st
 import requests
 import pandas as pd
 
@@ -18,7 +18,7 @@ if st.button("Run Forensic Audit"):
         clean_ca = target_ca.strip().replace("https://", "").replace("dexscreener.com", "")
         
         with st.spinner("Fetching live on-chain market data arrays..."):
-            # --- JETZT MIT DER KORREKTEN SUCH-API ROUTE ---
+            # --- HIER IST NUN DIE KORREKTEN SUCH-API ROUTE ---
             api_url = f"https://dexscreener.com{clean_ca}"
             
             headers = {
@@ -82,4 +82,4 @@ if st.button("Run Forensic Audit"):
                     st.error("Token pool data not found. Ensure the token is actively trading on a DEX indexed by DexScreener.")
             
             except requests.exceptions.RequestException as e:
-                st.error(f"Network error while connecting to the blockchain API:
+                st.error(f"Network error while connecting to the blockchain API: {e}")
