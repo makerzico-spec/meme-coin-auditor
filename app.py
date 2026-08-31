@@ -1,5 +1,4 @@
-import streamlit as st
-import streamlit as st
+pythonimport streamlit as st
 import requests
 import pandas as pd
 
@@ -15,33 +14,35 @@ if st.button("Run Forensic Audit"):
     if not target_ca:
         st.warning("Please enter a valid contract address.")
     else:
+        # Clean the input address just in case spaces or website names got stuck to it
+        clean_ca = target_ca.strip().replace("https://", "").replace("dexscreener.com", "")
+        
         with st.spinner("Fetching live on-chain market data arrays..."):
-            # Fetch data from DexScreener API
-            #api_url = f"https://dexscreener.com{target_ca}"
-            api_url = f"https://dexscreener.com{target_ca}"
-            # Browser headers to bypass bot protection
+            # --- JETZT MIT DER KORREKTEN SUCH-API ROUTE ---
+            api_url = f"https://dexscreener.com{clean_ca}"
+            
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/json"
             }
             
             try:
                 response = requests.get(api_url, headers=headers, timeout=10)
                 
                 if response.status_code == 200 and response.json().get('pairs'):
-                    # Extract primary pair data array
-                    pair_list = response.json()['pairs']
-                    pair_data = pair_list[0]  # Grab the first trading pair array element
+                    # Grab the primary active pair array element
+                    pair_data = response.json()['pairs'][0]
                     
                     # Extract Variables
                     token_name = pair_data['baseToken']['name']
                     token_symbol = pair_data['baseToken']['symbol']
                     market_cap = float(pair_data.get('marketCap', 0))
                     liquidity_usd = float(pair_data.get('liquidity', {}).get('usd', 0))
-                    volume_24h = float(pair_data.get('volume', {}).get('m5', 0))
+                    volume_5m = float(pair_data.get('volume', {}).get('m5', 0))
                     
                     st.subheader(f"Analyzing: {token_name} ({token_symbol})")
                     
-                    # --- SAFETY ENGINE ---
+                    # --- SAFETY COMPUTATION ENGINE ---
                     safety_score = 100
                     red_flags = []
                     
@@ -51,7 +52,7 @@ if st.button("Run Forensic Audit"):
                             safety_score -= 30
                             red_flags.append(f"🚨 Thin Liquidity Window: Liquidity is only {liq_ratio*100:.1f}% of Market Cap. High crash risk.")
                     
-                    if volume_24h > liquidity_usd and liquidity_usd > 0:
+                    if volume_5m > liquidity_usd and liquidity_usd > 0:
                         safety_score -= 25
                         red_flags.append("🚨 Artificial Wash Trading: 5-min transaction volume exceeds total pool depth. Fake bot volume detected.")
                     
@@ -59,11 +60,11 @@ if st.button("Run Forensic Audit"):
                     st.metric(label="Calculated Safety Confidence Score", value=f"{safety_score}/100")
                     
                     if safety_score == 100:
-                        st.success("✅ Static and basic behavioral matrix checks passed.")
+                        st.success("✅ Structural data matrix checks passed.")
                     elif safety_score >= 70:
-                        st.warning("⚠️ Caution: Minor structural anomalies detected.")
+                        st.warning("⚠️ Caution: Minor anomalies detected.")
                     else:
-                        st.error("❌ High Probability Scam Environment: Multiple anomalies found.")
+                        st.error("❌ High Risk Environment: Multiple abnormalities found.")
                         
                     if red_flags:
                         st.write("### Data Anomalies Found:")
@@ -73,12 +74,12 @@ if st.button("Run Forensic Audit"):
                     st.write("### Extracted Structural Vector")
                     metrics_df = pd.DataFrame({
                         "Metric Parameter": ["Market Cap", "Liquidity Pool", "Recent Vol (5m)"],
-                        "Value ($USD)": [f"${market_cap:,.2f}", f"${liquidity_usd:,.2f}", f"${volume_24h:,.2f}"]
+                        "Value ($USD)": [f"${market_cap:,.2f}", f"${liquidity_usd:,.2f}", f"${volume_5m:,.2f}"]
                     })
                     st.table(metrics_df)
                     
                 else:
-                    st.error("Token data not found on DexScreener yet. It might be too fresh or the CA is incorrect.")
+                    st.error("Token pool data not found. Ensure the token is actively trading on a DEX indexed by DexScreener.")
             
             except requests.exceptions.RequestException as e:
-                st.error(f"Network error while connecting to the blockchain API: {e}")
+                st.error(f"Network error while connecting to the blockchain API:
