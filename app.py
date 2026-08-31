@@ -1,4 +1,5 @@
-pythonimport streamlit as st
+import streamlit as st
+import streamlit as st
 import requests
 import pandas as pd
 
@@ -18,18 +19,18 @@ if st.button("Run Forensic Audit"):
             # Fetch data from DexScreener API
             api_url = f"https://dexscreener.com{target_ca}"
             
-            # --- FIX: Browser headers to bypass bot protection ---
+            # Browser headers to bypass bot protection
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
             
             try:
-                # Added headers and a 10-second timeout safety net
                 response = requests.get(api_url, headers=headers, timeout=10)
                 
                 if response.status_code == 200 and response.json().get('pairs'):
                     # Extract primary pair data array
-                    pair_data = response.json()['pairs'][0] # Grab the first trading pair found
+                    pair_list = response.json()['pairs']
+                    pair_data = pair_list[0]  # Grab the first trading pair array element
                     
                     # Extract Variables
                     token_name = pair_data['baseToken']['name']
