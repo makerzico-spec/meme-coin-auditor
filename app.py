@@ -14,11 +14,11 @@ if st.button("Run Forensic Audit"):
     if not target_ca:
         st.warning("Please enter a valid contract address.")
     else:
-        # Clean the input address just in case spaces or website names got stuck to it
-        clean_ca = target_ca.strip().replace("https://", "").replace("dexscreener.com", "")
+        # Säuberung der Adresse (Entfernt versehentlich mitkopierte Web-Links)
+        clean_ca = target_ca.strip().replace("https://", "").replace("dexscreener.com", "").replace("/", "")
         
         with st.spinner("Fetching live on-chain market data arrays..."):
-            # --- HIER IST NUN DIE KORREKTEN SUCH-API ROUTE ---
+            # --- DIE KORREKTE GLOBAL SEARCH API ROUTE ---
             api_url = f"https://dexscreener.com{clean_ca}"
             
             headers = {
@@ -30,10 +30,10 @@ if st.button("Run Forensic Audit"):
                 response = requests.get(api_url, headers=headers, timeout=10)
                 
                 if response.status_code == 200 and response.json().get('pairs'):
-                    # Grab the primary active pair array element
+                    # Holt das erste Element aus dem Ergebnis-Array
                     pair_data = response.json()['pairs'][0]
                     
-                    # Extract Variables
+                    # Variablen-Extraktion
                     token_name = pair_data['baseToken']['name']
                     token_symbol = pair_data['baseToken']['symbol']
                     market_cap = float(pair_data.get('marketCap', 0))
@@ -42,7 +42,7 @@ if st.button("Run Forensic Audit"):
                     
                     st.subheader(f"Analyzing: {token_name} ({token_symbol})")
                     
-                    # --- SAFETY COMPUTATION ENGINE ---
+                    # --- SAFETY ENGINE ---
                     safety_score = 100
                     red_flags = []
                     
@@ -54,9 +54,9 @@ if st.button("Run Forensic Audit"):
                     
                     if volume_5m > liquidity_usd and liquidity_usd > 0:
                         safety_score -= 25
-                        red_flags.append("🚨 Artificial Wash Trading: 5-min transaction volume exceeds total pool depth. Fake bot volume detected.")
+                        red_flags.append("🚨 Artificial Wash Trading: 5-min volume exceeds total pool depth. Fake bot volume detected.")
                     
-                    # --- DISPLAY AUDIT RESULTS ---
+                    # --- DISPLAY RESULTS ---
                     st.metric(label="Calculated Safety Confidence Score", value=f"{safety_score}/100")
                     
                     if safety_score == 100:
@@ -79,7 +79,7 @@ if st.button("Run Forensic Audit"):
                     st.table(metrics_df)
                     
                 else:
-                    st.error("Token pool data not found. Ensure the token is actively trading on a DEX indexed by DexScreener.")
+                    st.error("Token pool data not found. Ensure the token is actively trading and indexed on DexScreener.")
             
             except requests.exceptions.RequestException as e:
                 st.error(f"Network error while connecting to the blockchain API: {e}")
